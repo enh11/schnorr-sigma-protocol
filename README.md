@@ -5,19 +5,16 @@ A simple Rust implementation of **Schnorr's identification protocol** using **To
 ## Overview
 
 This project demonstrates a basic **prover-verifier interaction**:
+Let $\mathbb{G}$ be a cyclic group of prime order $q$ (in this implementation we use the elliptic curve group k256) with generator $G$. Assume prover $P$ has a secret key $sk=\alpha\in\mathbb{Z}_q$, together with the corresponding public verification key $vk=\alpha G$. Schnorr's identification protocol allows $P$ to convince $V$ that he knows the discrete logarithm of $pk$ to the base $G$, without revealing anything about the secret key $sk$.
 
-- **Prover**: generates a random scalar $\alpha$, computes the elliptic curve point $R=\alpha G$, and sends it to the verifier.  
+- **Prover**: generates a random scalar $\alpha_t$, computes the elliptic curve point $R=\alpha G$, and sends it to the verifier.  
 - **Verifier**: computes $c\in\mathbb{Z}_q$, and sents it to the prover.
-- **Verifier**: receives the point `R` and prints it.  
-- The protocol is implemented over **TCP** using **Tokio** for async networking.  
-- Command-line control is provided using **Clap**.
+- **Prover**: computes $\alpha_z\gets \alpha_t + \alpha c\in\mathbb{Z}_q$, and sends $\alpha_z$ to the verifier.
+- **Verifier**: checks if $\alpha_z G = R + c G$.
 
 ## Features
-
-- Asynchronous TCP communication (`tokio::net::TcpListener` / `TcpStream`)  
-- Prover generates random values using `k256::Scalar`  
-- Elliptic curve operations using `k256` (secp256k1)  
-- Command-line subcommands using `clap`  
+The protocol is implemented using `tokio` for \emph{Asynchronous TCP communication}. 
+Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1)  and Command line using `clap`. 
 
 ## Usage
 
