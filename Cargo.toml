@@ -1,0 +1,29 @@
+[package]
+name = "schnorr"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = "4.5.60"
+crypto-bigint = "0.6.1"
+hex = "0.4.3"
+hex-literal = "1.1.0"
+tokio = { version = "1.50.0", features = ["full"] }
+
+
+
+# Random number generator
+rand_core = { version = "0.6", features = ["getrandom"] }
+
+# Hashing (SHA-1 / SHA-2 / SHA-3?)
+sha = "1.0.3"
+remoc = "0.18.3"
+k256 = "0.13.4"
+
+[[bin]]
+name = "verifier"
+path = "src/verifier.rs"
+
+[[bin]]
+name = "prover"
+path = "src/prover.rs"
