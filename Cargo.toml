@@ -22,8 +22,8 @@ k256 = "0.13.4"
 
 [[bin]]
 name = "verifier"
-path = "src/verifier.rs"
+path = "src/bin/verifier.rs"
 
 [[bin]]
 name = "prover"
-path = "src/prover.rs"
+path = "src/bin/prover.rs"

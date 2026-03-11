@@ -1,7 +1,7 @@
 use std::ops::Mul;
 
-use clap::{Arg, Command, Parser, arg, command};
-use k256::{Scalar, Secp256k1, SecretKey, elliptic_curve::{Field, group::prime::PrimeCurveAffine, sec1::ToEncodedPoint}};
+use clap::{Arg, Command};
+use k256::{Scalar,SecretKey, elliptic_curve::{Field, group::prime::PrimeCurveAffine, sec1::ToEncodedPoint}};
 use rand_core::OsRng;
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
 
