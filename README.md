@@ -6,7 +6,8 @@ A simple Rust implementation of **Schnorr's identification protocol** using **To
 
 This project demonstrates a basic **prover-verifier interaction**:
 
-- **Prover**: generates a random scalar $\alpha$, computes the elliptic curve point $\R=\alpha G$, and sends it to the verifier.  
+- **Prover**: generates a random scalar $\alpha$, computes the elliptic curve point $R=\alpha G$, and sends it to the verifier.  
+- **Verifier**: computes $c\in\mathbb{Z}_q$, and sents it to the prover.
 - **Verifier**: receives the point `R` and prints it.  
 - The protocol is implemented over **TCP** using **Tokio** for async networking.  
 - Command-line control is provided using **Clap**.
