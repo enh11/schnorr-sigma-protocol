@@ -4,7 +4,9 @@ A simple Rust implementation of **Schnorr's identification protocol** using **To
 
 ## Overview
 
-This project demonstrates a basic **prover-verifier interaction**:
+This project demonstrates a basic prover-verifier interaction:
+
+
 Let $\mathbb{G}$ be a cyclic group of prime order $q$ (in this implementation we use the elliptic curve group k256) with generator $G$. Assume prover $P$ has a secret key $sk=\alpha\in\mathbb{Z}_q$, together with the corresponding public verification key $vk=\alpha G$. Schnorr's identification protocol allows $P$ to convince $V$ that he knows the discrete logarithm of $pk$ to the base $G$, without revealing anything about the secret key $sk$.
 
 - **Prover**: generates a random scalar $\alpha_t$, computes the elliptic curve point $R=\alpha G$, and sends it to the verifier.  
