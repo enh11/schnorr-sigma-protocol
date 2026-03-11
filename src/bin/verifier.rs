@@ -1,4 +1,3 @@
-use std::ops::Mul;
 
 use k256::elliptic_curve::Field;
 use k256::elliptic_curve::group::prime::PrimeCurveAffine;
@@ -52,5 +51,8 @@ async fn send_random_point(verifier_addr: &str) -> Result<(), Box<dyn std::error
     println!("Verifier responded: {}", String::from_utf8_lossy(&buf[..n]));
 
     Ok(())
+}
+pub fn verfy()->bool {
+    todo!()
 }
 }

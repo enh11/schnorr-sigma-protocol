@@ -54,4 +54,7 @@ impl Prover {
 
     Ok(())
 }
+pub fn response(c:Scalar)->Scalar {
+    todo!()
+}
 }
