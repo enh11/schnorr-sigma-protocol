@@ -20,5 +20,15 @@ Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1)  and 
 
 ### Start the verifier
 
+The verifier opens a TCP listener on `127.0.0.1:8080` and waits for incoming prover connections.
+
 ```bash
 cargo run --bin verifier
+```
+### Run the prover (round-one)
+The prover connects to the verifier and sends the commitment 
+$R=\alpha_t G$
+
+```
+cargo run --bin prover -- round-one --address 127.0.0.1:8080
+```
