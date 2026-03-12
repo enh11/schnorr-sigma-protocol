@@ -1,77 +1,22 @@
-use std::ops::Mul;
+use std::path::Path;
 
-use clap::{Arg, Command};
-use k256::{PublicKey, Scalar, SecretKey, elliptic_curve::{Field, group::prime::PrimeCurveAffine, sec1::ToEncodedPoint}};
-use rand_core::OsRng;
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
-use schnorr::prover::Prover;
+use schnorr::{prover::{Prover, read_public_key_der_file}, session::ProverSession};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let prover:Prover;
-    let addr:&str;
-    let matches = Command::new("schnorr")
-        .version("0.1")
-        .author("Enrico Talotti")
-        .about("Identification and signature from Sigma protocol")
-        .subcommand(
-            Command::new("setup")
-                .about("Initialization of Schnorr's protocol.")
-                .arg(
-                    Arg::new("skey")
-                    .help("Secret key")
-                    .long("sk")
-                    .required(true)
-                )
-                // .arg(
-                //     Arg::new("pkey")
-                //     .help("Public key")
-                //     .long("pk")
-                //     .required(true)
-                // )
-                .arg(
-                Arg::new("address")
-                    .help("Address of the verifier. Default is 127.0.0.1:8080")
-                    .short('a')
 
-                )
-            )
-        .subcommand(
-            Command::new("round-one")
-                .about("Run the first round of the protocol")
-        ).get_matches();
+    let addr = "127.0.0.1:8080";
+    let pk_path = Path::new("pk.pem");
+    let pk = read_public_key_der_file(pk_path).unwrap();
+    let prover = Prover::new(pk);
 
-match matches.subcommand() {
+    let mut session = ProverSession::connect(prover, addr).await?;
 
-    Some(("setup", sub_m)) => {
+    session.send_commitment().await?;
 
-        addr = sub_m
-            .get_one::<String>("address")
-            .unwrap();
-        let sk_string = sub_m
-            .get_one::<String>("skey")
-            .unwrap();
-        let sk= SecretKey::from_slice(&hex::decode(sk_string)? )?;
+    let c = session.receive_challenge().await?;
 
-        prover = Prover::new(sk);
-        let pk = prover.extract_pk();
-
-        // Connect to the verifier
-        let mut stream = TcpStream::connect(addr).await?;
-        // Send the random value as bytes
-        stream.write_all(&pk.to_encoded_point(false).to_bytes()).await?;
-    }
-
-    Some(("round-one", sub_m)) => {
-
-        let addr = sub_m
-            .get_one::<String>("address")
-            .unwrap();
-
-        // call commitment logic
-    }
-
-    _ => {}
-}
+    //session.send_response(c).await?;
 
     Ok(())
 }
