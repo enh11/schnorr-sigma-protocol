@@ -15,11 +15,3 @@ impl Commitment {
         (r,commitment)
     }
 }
-
-pub struct Challenge {
-    pub c: Scalar,
-}
-
-pub struct Response {
-    pub s: Scalar,
-}
