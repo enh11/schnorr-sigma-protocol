@@ -1,7 +1,12 @@
 use k256::{ProjectivePoint, Scalar};
 
 pub struct Commitment {
-    pub R: ProjectivePoint,
+    pub point: ProjectivePoint,
+}
+impl Commitment {
+    pub fn new(point:&ProjectivePoint)->Self{
+        Commitment { point: *point }
+    }
 }
 
 pub struct Challenge {

@@ -10,7 +10,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("Verifier listening on 127.0.0.1:8080");
+    println!("Verifier listening on 127.0.0.1:8080\nWaiting for initialization");
 
     loop {
         let (mut socket, addr) = listener.accept().await?;
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Decode the received bytes into a ProjectivePoint
                 let encoded = EncodedPoint::from_bytes(&buf).unwrap();
                 let r = ProjectivePoint::from_encoded_point(&encoded).unwrap();
-                println!("Verifier received R = {:?}", r);
+                println!("Verifier received R = {:?}", r.to_affine());
                 let _ = socket.write_all(b"Point received").await;
             }
         });
