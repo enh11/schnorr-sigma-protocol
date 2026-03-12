@@ -32,8 +32,7 @@ impl ProverSession {
         })
     }
     pub async fn send_commitment(
-    &mut self
-) -> Result<(), Box<dyn std::error::Error>> {
+        &mut self) -> Result<(), Box<dyn std::error::Error>> {
 
     let (r, commitment) = self.prover.commit_random_value();
 
