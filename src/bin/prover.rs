@@ -1,22 +1,30 @@
 use std::path::Path;
 
-use schnorr::{prover::{Prover, read_public_key_der_file}, session::ProverSession};
+use k256::{Secp256k1, elliptic_curve::{PublicKey, SecretKey, sec1::ToEncodedPoint}, pkcs8::{DecodePublicKey, EncodePublicKey}};
+use rand_core::OsRng;
+use schnorr::{prover::{Prover, key_gen, read_public_key_der_file}, session::ProverSession};
+use tokio::{io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, net::TcpStream};
+use std::io;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+key_gen(&"sk.pem".to_string(), &"pk.pem".to_string());
+let pk: Result<PublicKey<Secp256k1>, k256::pkcs8::spki::Error> = PublicKey::read_public_key_der_file("pk.pem");
+println!("pk {:?}",pk.unwrap().to_encoded_point(false).to_string());
+    let stream = TcpStream::connect("127.0.0.1:8080").await?;
+    let (reader, mut writer) = stream.into_split();
 
-    let addr = "127.0.0.1:8080";
-    let pk_path = Path::new("pk.pem");
-    let pk = read_public_key_der_file(pk_path).unwrap();
-    let prover = Prover::new(pk);
+    let mut reader = BufReader::new(reader);
 
-    let mut session = ProverSession::connect(prover, addr).await?;
+    let mut server_msg = String::new();
+    reader.read_line(&mut server_msg).await?;
 
-    session.send_commitment().await?;
+    print!("{}", server_msg);
 
-    let c = session.receive_challenge().await?;
+    let mut id = String::new();
+    io::stdin().read_line(&mut id)?;
 
-    //session.send_response(c).await?;
+    writer.write_all(id.as_bytes()).await?;
 
     Ok(())
 }

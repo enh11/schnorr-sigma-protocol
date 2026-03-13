@@ -1,5 +1,12 @@
 
-use k256::elliptic_curve::Field;
+use std::fs;
+use std::path::Path;
+use std::str::FromStr;
+
+use serde::{Deserialize, Serialize};
+use tokio::io::{AsyncBufReadExt, BufReader};
+
+use k256::elliptic_curve::{Field};
 use k256::elliptic_curve::group::prime::PrimeCurveAffine;
 use k256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use k256::{EncodedPoint, ProjectivePoint, PublicKey, Scalar};
@@ -9,29 +16,39 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("Verifier listening on 127.0.0.1:8080\nWaiting for initialization");
+    println!("Verifier listening on 127.0.0.1:8080");
 
     loop {
-        let (mut socket, addr) = listener.accept().await?;
+        let (socket, addr) = listener.accept().await?;
         println!("Prover connected: {}", addr);
 
-        tokio::spawn(async move {
-            let mut buf = [0u8; 65]; // 65 bytes for uncompressed point
-            if socket.read_exact(&mut buf).await.is_ok() {
-                // Decode the received bytes into a ProjectivePoint
-                let encoded = EncodedPoint::from_bytes(&buf).unwrap();
-                let r = ProjectivePoint::from_encoded_point(&encoded).unwrap();
-                println!("Verifier received R = {:?}", r.to_affine());
-                let _ = socket.write_all(b"Point received").await;
-            }
-        });
+        let (reader, mut writer) = socket.into_split();
+
+        // ask for id
+        writer.write_all(b"Enter ID:\n").await?;
+
+        let mut reader = BufReader::new(reader);
+        let mut id = String::new();
+        reader.read_line(&mut id).await?;
+        let id_str = Path::new("users").join(format!("{}.json", id.trim()));
+
+        let data = fs::read_to_string(id_str).expect("error: user not found!");
+        let users:Vec<User>= serde_json::from_str(&data)?;
+
+        let user =users.iter().find(|u| u.id == id.trim());
+        let pk_user = user.unwrap().pk.clone();
+        println!("pk {:?}",pk_user);
+
+        let p = EncodedPoint::from_str(&pk_user);
+        let pk = k256::PublicKey::from_encoded_point(&p.unwrap());
+        println!("Received ID from prover: {}", id.trim());
     }
 }
-
 pub struct Verifier(PublicKey);
 impl Verifier {
-    pub fn new(pk:PublicKey)->Self {
+    pub fn new(pk: PublicKey) -> Self {
         Verifier(pk)
     }
 async fn send_random_point(verifier_addr: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -55,4 +72,10 @@ async fn send_random_point(verifier_addr: &str) -> Result<(), Box<dyn std::error
 pub fn verfy()->bool {
     todo!()
 }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct User {
+    pub id: String,
+    pub pk: String,
 }
