@@ -9,6 +9,7 @@ crypto-bigint = "0.6.1"
 hex = "0.4.3"
 hex-literal = "1.1.0"
 tokio = { version = "1.50.0", features = ["full"] }
+mini-redis = "0.4"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -20,6 +21,7 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 sha = "1.0.3"
 remoc = "0.18.3"
 k256 = "0.13.4"
+anyhow = "1.0.102"
 
 [[bin]]
 name = "verifier"
