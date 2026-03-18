@@ -6,7 +6,7 @@ A simple Rust implementation of **Schnorr's identification protocol** using **To
 
 This project demonstrates a basic prover-verifier interaction:
 
-
+	
 Let $\mathbb{G}$ be a cyclic group of prime order $q$ (in this implementation we use the elliptic curve group k256) with generator $G$. Assume prover $P$ has a secret key $sk=\alpha\in\mathbb{Z}_q$, together with the corresponding public verification key $vk=\alpha G$. Schnorr's identification protocol allows $P$ to convince $V$ that he knows the discrete logarithm of $pk$ to the base $G$, without revealing anything about the secret key $sk$.
 
 - **Prover**: generates a random scalar $\alpha_t$, computes the elliptic curve point $R=\alpha G$, and sends it to the verifier.  
@@ -34,4 +34,11 @@ $R=\alpha_t G$
 ```
 cargo run --bin prover
 ```
-The server will ask for your ID. In our example, we saved a .json file containing an ID '123' with the corresponding public key. When the prover enter the ID, the Schnoor's protocol starts. 
+
+- The server will prompt you for your ID.
+  - In this example, we use a `.json` file that maps IDs to public keys.
+  - For instance, the ID "123" corresponds to a stored public key.
+
+- After entering the ID, the Schnorr protocol begins:
+  - If the prover is honest, the verifier accepts the proof.
+  - Otherwise, the verifier rejects the identification attempt.
