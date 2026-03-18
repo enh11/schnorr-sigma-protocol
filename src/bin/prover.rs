@@ -25,11 +25,10 @@ async fn main() -> anyhow::Result<()> {
 
 // Initialization of the prover.
     let my_pk = PublicKey::read_public_key_der_file("pk.pem").expect("Error in reading Public Key.");
-    let prover = Prover::new(my_pk);
+    let mut prover = Prover::new(my_pk);
 // First Round: generate random point.
-    let (r,rg) = prover.commit_random_value();
-    println!("commit {:?}",rg.point);
-    writer.write_all(&rg.point.to_encoded_point(false).to_bytes()).await?;
+    let _ = prover.send_commitment_to_random_value(writer);
+    println!("commit {:?}",prover.commitment.unwrap());
 // Second Round: read challenge from prover and respond.
 let mut buf = [0u8; 32];
 reader.read_exact(&mut buf).await?;

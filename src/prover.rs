@@ -1,8 +1,9 @@
 use std::{fs::{self, File}, io::Write, path::Path};
 
+use crypto_bigint::subtle::{Choice, CtOption};
 use k256::{ProjectivePoint, PublicKey, Scalar, SecretKey, elliptic_curve::{Field, sec1::ToEncodedPoint}, pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, der::EncodeRef}};
 use rand_core::OsRng;
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpStream, tcp::OwnedWriteHalf}};
 
 use crate::protocol::Commitment;
 
@@ -11,13 +12,18 @@ use crate::protocol::Commitment;
 /// If he is not cheating, then he knows the corresponding SecretKey.
 /// Here, we will provide the SecretKey as a .pem file.
 pub struct Prover{
-    public_key: PublicKey,  // The public key of the prover 
-    r: Option<Scalar>, // The random secret committed as rG.
-    challenge: Option<Scalar> // The challenge sent by the verifier.
+    pub public_key: PublicKey,  // The public key of the prover 
+    pub r: Option<Scalar>, // The random secret r.
+    pub commitment: CtOption<ProjectivePoint>,// The committed point rG.
+    pub challenge: Option<Scalar> // The challenge sent by the verifier.
 }
 impl Prover {
     pub fn new(pk:PublicKey)->Self{
-        Prover { public_key: pk, r: None, challenge: None }
+        Prover { 
+            public_key: pk, 
+            r: None, 
+            commitment:CtOption::new(ProjectivePoint::IDENTITY, Choice::from(0)),
+            challenge: None }
     }
     pub fn read_pkcs8_der_file(sk_path:&Path)->Result<k256::elliptic_curve::SecretKey<k256::Secp256k1>, k256::pkcs8::Error> {
         DecodePrivateKey::read_pkcs8_der_file(sk_path)
@@ -26,26 +32,17 @@ impl Prover {
     pub fn commit_sk(&self)->ProjectivePoint {
         self.public_key.to_projective()
     }
-    pub fn commit_random_value(&self)->(Scalar,Commitment) {
+    fn commit_random_value(&self)->(Scalar,ProjectivePoint) {
         let r  =Scalar::random(&mut OsRng);
-        let point = ProjectivePoint::GENERATOR * r;
-        let commitment  = Commitment::new(&point);
+        let commitment = ProjectivePoint::GENERATOR * r;
+        
         (r,commitment)
     }
-    pub async fn send_commitment_to_random_value(&self,verifier_addr: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn send_commitment_to_random_value(&mut self,mut writer:OwnedWriteHalf) -> anyhow::Result<()> {
  
-        let p = self.commit_random_value().1.point;
-
-        // Connect to the verifier
-        let mut stream = TcpStream::connect(verifier_addr).await?;
-        // Send the random value as bytes
-        stream.write_all(&p.to_encoded_point(false).to_bytes()).await?;
-        
-        // // Wait for verifier response
-        // let mut buf = [0u8; 1024];
-        // let n = stream.read(&mut buf).await?;
-        // println!("Verifier responded: {}", String::from_utf8_lossy(&buf[..n]));
-
+        let (r,rg) = self.commit_random_value();
+        self.r = Some(r);
+        writer.write_all(&rg.to_encoded_point(false).to_bytes()).await?;
         Ok(())
 }
 pub fn response(c:Scalar)->Scalar {
