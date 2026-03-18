@@ -1,12 +1,7 @@
-use std::{io::Bytes, path::Path};
-
-use k256::{Scalar, Secp256k1, elliptic_curve::{PrimeField, PublicKey, SecretKey, sec1::ToEncodedPoint}, pkcs8::{DecodePublicKey, EncodePublicKey, der::{Decode, DecodeValue}}};
-use rand_core::OsRng;
-use schnorr::{prover::{Prover, key_gen, read_public_key_der_file}, session::ProverSession};
-use serde::Serialize;
+use k256::{Scalar, elliptic_curve::{PrimeField, PublicKey, sec1::ToEncodedPoint}, pkcs8::{DecodePublicKey}};
+use schnorr::{prover::{Prover}};
 use tokio::{io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, net::TcpStream};
 use std::io;
-use schnorr::protocol::Message;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

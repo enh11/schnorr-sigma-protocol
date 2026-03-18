@@ -1,4 +1,3 @@
-use clap::builder::Str;
 use k256::{ProjectivePoint, Scalar, elliptic_curve::Field};
 use rand_core::OsRng;
 

@@ -11,21 +11,20 @@ use crate::protocol::Commitment;
 /// If he is not cheating, then he knows the corresponding SecretKey.
 /// Here, we will provide the SecretKey as a .pem file.
 pub struct Prover{
-    pub pk:PublicKey
+    public_key: PublicKey,  // The public key of the prover 
+    r: Option<Scalar>, // The random secret committed as rG.
+    challenge: Option<Scalar> // The challenge sent by the verifier.
 }
-
 impl Prover {
     pub fn new(pk:PublicKey)->Self{
-        Prover{
-            pk
-        }
+        Prover { public_key: pk, r: None, challenge: None }
     }
     pub fn read_pkcs8_der_file(sk_path:&Path)->Result<k256::elliptic_curve::SecretKey<k256::Secp256k1>, k256::pkcs8::Error> {
         DecodePrivateKey::read_pkcs8_der_file(sk_path)
     }
     
     pub fn commit_sk(&self)->ProjectivePoint {
-        self.pk.to_projective()
+        self.public_key.to_projective()
     }
     pub fn commit_random_value(&self)->(Scalar,Commitment) {
         let r  =Scalar::random(&mut OsRng);
@@ -42,10 +41,10 @@ impl Prover {
         // Send the random value as bytes
         stream.write_all(&p.to_encoded_point(false).to_bytes()).await?;
         
-        // Wait for verifier response
-        let mut buf = [0u8; 1024];
-        let n = stream.read(&mut buf).await?;
-        println!("Verifier responded: {}", String::from_utf8_lossy(&buf[..n]));
+        // // Wait for verifier response
+        // let mut buf = [0u8; 1024];
+        // let n = stream.read(&mut buf).await?;
+        // println!("Verifier responded: {}", String::from_utf8_lossy(&buf[..n]));
 
         Ok(())
 }

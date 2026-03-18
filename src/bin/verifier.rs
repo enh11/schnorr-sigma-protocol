@@ -1,12 +1,11 @@
 
 use std::fs;
+use std::io::BufRead;
 use std::path::Path;
 use std::str::FromStr;
 
 use anyhow::Ok;
-use k256::elliptic_curve::group::GroupEncoding;
-use k256::pkcs8::der::EncodeValue;
-use schnorr::prover::Prover;
+use crypto_bigint::subtle::CtOption;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncBufReadExt, BufReader};
 
@@ -15,6 +14,8 @@ use k256::elliptic_curve::group::prime::PrimeCurveAffine;
 use k256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use k256::{EncodedPoint, ProjectivePoint, PublicKey, Scalar, Secp256k1};
 use rand_core::OsRng;
+use crypto_bigint::subtle::Choice;
+use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -44,53 +45,39 @@ async fn main() -> anyhow::Result<()>{
         println!("pk {:?}",pk_user);
         let pk = EncodedPoint::from_str(&pk_user).unwrap();
         let pk: PublicKey = PublicKey::from_encoded_point(&pk).unwrap();
-        let prover = Prover::new(pk);
+        let mut verifier = Verifier::new(pk);
 //Read commitment from the prover
-        let mut buf = [0u8; 65]; 
-        reader.read_exact(&mut buf).await?;
-        let encoded = EncodedPoint::from_bytes(&buf).unwrap();
-        let commit = ProjectivePoint::from_encoded_point(&encoded).unwrap();
-        println!("recieved {:?}",commit);
-// Send a Challeng
-    let c = Scalar::random(&mut OsRng);
-    writer.write_all(&c.to_bytes()).await?;
-    println!("challeng {:?}",c);
-
-
-
-        
+        let _ = verifier.read_commitment(&mut reader).await;
+        println!("recieved {:?}",verifier.commitment.unwrap());
+// Send a Challenge
+    let _ = verifier.send_challenge(writer).await;
+    println!("challenge {:?}",verifier.challenge.unwrap());
     Ok(())
-
-    // loop {
-    //     let (socket, addr) = listener.accept().await?;
-    //     println!("Prover connected: {}", addr);
-
-    //     let (reader, mut writer) = socket.into_split();
-
-    //     // ask for id
-    //     writer.write_all(b"Enter ID:\n").await?;
-
-    //     let mut reader = BufReader::new(reader);
-    //     let mut id = String::new();
-    //     reader.read_line(&mut id).await?;
-    //     let id_str = Path::new("users").join(format!("{}.json", id.trim()));
-
-    //     let data = fs::read_to_string(id_str).expect("error: user not found!");
-    //     let users:Vec<User>= serde_json::from_str(&data)?;
-
-    //     let user =users.iter().find(|u| u.id == id.trim());
-    //     let pk_user = user.unwrap().pk.clone();
-    //     println!("pk {:?}",pk_user);
-
-    //     let p = EncodedPoint::from_str(&pk_user);
-    //     let pk = k256::PublicKey::from_encoded_point(&p.unwrap());
-    //     println!("Received ID from prover: {}", id.trim());
-    // }
 }
-pub struct Verifier(PublicKey);
-impl Verifier {
+pub struct Verifier {
+    pub public_key: PublicKey,   // Y = x·G
+    pub commitment: CtOption<ProjectivePoint>, // R
+    pub challenge: Option<Scalar>,     // c
+}impl Verifier {
     pub fn new(pk: PublicKey) -> Self {
-        Verifier(pk)
+        Verifier { public_key: pk, commitment: CtOption::new(ProjectivePoint::IDENTITY, Choice::from(0)), challenge: None }
+    }
+    pub async fn send_challenge(&mut self, mut writer: OwnedWriteHalf) -> anyhow::Result<()> {
+        let c = Scalar::random(&mut OsRng);
+        self.challenge = Some(c);
+        writer.write_all(&c.to_bytes()).await?;
+        Ok(())
+    }
+    pub async fn read_commitment(&mut self, reader: &mut BufReader<OwnedReadHalf>) -> anyhow::Result<()> {
+
+        let mut buf = [0u8; 65];
+        reader.read_exact(&mut buf).await?;
+
+        let encoded = EncodedPoint::from_bytes(&buf)?;
+        let commit = ProjectivePoint::from_encoded_point(&encoded);
+        self.commitment = commit;
+        println!("received {:?}", commit);
+        Ok(())
     }
 async fn send_random_point(verifier_addr: &str) -> anyhow::Result<()> {
     // Generate a random u32 value
