@@ -20,7 +20,7 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 # Hashing (SHA-1 / SHA-2 / SHA-3?)
 sha = "1.0.3"
 remoc = "0.18.3"
-k256 = "0.13.4"
+k256 = { version = "0.13.4", features = ["serde"] }
 anyhow = "1.0.102"
 
 [[bin]]
