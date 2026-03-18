@@ -27,10 +27,11 @@ The verifier opens a TCP listener on `127.0.0.1:8080` and waits for incoming pro
 ```bash
 cargo run --bin verifier
 ```
-### Run the prover (round-one)
+### Run the prover
 The prover connects to the verifier and sends the commitment 
 $R=\alpha_t G$
 
 ```
-cargo run --bin prover -- round-one --address 127.0.0.1:8080
+cargo run --bin prover
 ```
+The server will ask for your ID. In our example, we saved a .json file containing an ID '123' with the corresponding public key. When the prover enter the ID, the Schnoor's protocol starts. 
