@@ -32,7 +32,6 @@ async fn main() -> anyhow::Result<()>{
     }
 
 }
-
 async fn handle_connection(socket: TcpStream)->anyhow::Result<()> {
      let (reader, writer) = socket.into_split();
     let conn = Connection {
@@ -42,32 +41,4 @@ async fn handle_connection(socket: TcpStream)->anyhow::Result<()> {
     };
 
     conn.run().await
-//     let (reader, mut writer) = socket.into_split();
-//          // ask for id
-//          writer.write_all(b"Enter ID:\n").await?;
-
-//          let mut reader = BufReader::new(reader);
-//          let mut id = String::new();
-//         reader.read_line(&mut id).await?;
-//         let id_str = Path::new("users").join(format!("{}.json", id.trim()));
-
-//         let data = tokio::fs::read_to_string(id_str).await?;
-//         writer.write_all(b"user found.\n").await?;
-//         let users:Vec<User>= serde_json::from_str(&data)?;
-
-//         let user =users.iter().find(|u| u.id == id.trim());
-//         let pk_user = user.unwrap().pk.clone();
-//         println!("pk {:?}",pk_user);
-//         let pk = EncodedPoint::from_str(&pk_user).unwrap();
-//         let pk: PublicKey = PublicKey::from_encoded_point(&pk).unwrap();
-//         let mut verifier = Verifier::new(pk);
-// //Read commitment from the prover
-//         let _ = verifier.read_commitment(&mut reader).await?;
-//         //println!("recieved {:?}",verifier.commitment.unwrap());
-// // Send a Challenge
-//     let _ = verifier.send_challenge(&mut writer).await?;
-//    // println!("challenge {:?}",verifier.challenge.unwrap());
-//     // Read response
-// let _ =verifier.verify(&mut reader,&mut writer).await?;
-//     Ok(())
 }
