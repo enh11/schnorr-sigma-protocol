@@ -37,6 +37,7 @@ let _ = prover.read_challenge(&mut reader).await?;
 // Third round: send rG + (sk)cG
 let _ = prover.response(&mut writer).await?;
 // Read response of identification 
+server_msg.clear();
     reader.read_line(&mut server_msg).await?;
     println!("{}", server_msg);
 
