@@ -1,5 +1,3 @@
-
-use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -10,7 +8,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use k256::elliptic_curve::sec1::{FromEncodedPoint};
 use k256::{EncodedPoint, PublicKey};
 
-use tokio::net::{TcpListener};
+use tokio::net::{TcpListener, TcpSocket, TcpStream};
 use tokio::io::{AsyncWriteExt};
 
 #[tokio::main]
@@ -18,9 +16,23 @@ async fn main() -> anyhow::Result<()>{
 
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
     println!("Verifier listening on 127.0.0.1:8080");
-    let (socket, addr) = listener.accept().await?;
-    println!("Prover connected to the server: {}\nRunning identification protocol.", addr);
+    // let (socket, addr) = listener.accept().await?;
+    //println!("Prover connected to the server: {}\nRunning identification protocol.", addr);
 
+    loop {
+        let (socket, addr) = listener.accept().await?;
+        println!("Prover connected. {}",addr);
+
+        tokio::spawn(async move {
+            if let Err(e)= handle_connection(socket).await {
+                eprintln!("Error with {}: {:?}",addr,e)
+            }
+        });
+    }
+
+}
+
+async fn handle_connection(socket: TcpStream)->anyhow::Result<()> {
     let (reader, mut writer) = socket.into_split();
          // ask for id
          writer.write_all(b"Enter ID:\n").await?;
@@ -30,7 +42,7 @@ async fn main() -> anyhow::Result<()>{
         reader.read_line(&mut id).await?;
         let id_str = Path::new("users").join(format!("{}.json", id.trim()));
 
-        let data = fs::read_to_string(id_str).expect("error: user not found!");
+        let data = tokio::fs::read_to_string(id_str).await?;
         writer.write_all(b"user found.\n").await?;
         let users:Vec<User>= serde_json::from_str(&data)?;
 
@@ -49,11 +61,7 @@ async fn main() -> anyhow::Result<()>{
     // Read response
 let _ =verifier.verify(&mut reader,&mut writer).await?;
     Ok(())
-
-
 }
-
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
     pub id: String,
