@@ -1,3 +1,3 @@
 pub mod prover;
 pub mod verifier;
-pub mod user;
+pub mod schnorr_protocol;
