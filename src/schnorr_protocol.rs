@@ -40,7 +40,11 @@ pub struct User {
     pub id: String,
     pub pk: String,
 }
-
+pub enum Action {
+    Invalid,
+    Register,
+    Authentication    
+}
 /// Represents the current state of the identification protocol.
 ///
 /// Each variant corresponds to a specific phase in the verifier's interaction
@@ -106,13 +110,20 @@ pub struct Connection {
     pub state: ProtocolState,
 }
 impl Connection {
-    pub async fn handle_waiting_for_action(mut self)->anyhow::Result<Self> {
-        self.writer
-            .write_all(b"Choose action: [login/register]\n")
-            .await?;
-    Ok(self)
-        
-    }
+    pub async fn read_action(&mut self) -> anyhow::Result<Action> {
+    self.writer
+        .write_all(b"Choose action: [login/register]\n")
+        .await?;
+
+    let mut action = String::new();
+    self.reader.read_line(&mut action).await?;
+
+    Ok(match action.trim() {
+        "login" => Action::Authentication,
+        "register" => Action::Register,
+        _ => Action::Invalid,
+    })
+}
     pub async fn handle_waiting_for_id(mut self) -> anyhow::Result<Self> {
         // ask for id
         self.writer.write_all(b"Enter ID:\n").await?;
@@ -183,11 +194,59 @@ impl Connection {
     Ok(self)
     }
 
-    pub async fn run(self) -> anyhow::Result<()> {
-        let conn = self.handle_waiting_for_id().await?;
-        let conn = conn.handle_user_loaded().await?;
-        let conn = conn.handle_commitment().await?;
-        let _conn = conn.handle_challenge().await?;
-        Ok(())
+pub async fn run(mut self) -> anyhow::Result<()> {
+    loop {
+        match self.read_action().await? {
+            Action::Authentication => {
+                self = self.run_schnorr().await?;
+            }
+
+            Action::Register => {
+                self = self.run_register().await?;
+            }
+
+            Action::Invalid => {
+                self.writer.write_all(b"Invalid action\n").await?;
+            }
+        }
+    }
+}
+pub async fn run_schnorr(mut self) -> anyhow::Result<Self> {
+    self = self.handle_waiting_for_id().await?;
+    self = self.handle_user_loaded().await?;
+    self = self.handle_commitment().await?;
+    self = self.handle_challenge().await?;
+    Ok(self)
+}
+pub async fn run_register(mut self) -> anyhow::Result<Self> {
+    self.writer.write_all(b"Enter new ID:\n").await?;
+
+    let mut id = String::new();
+    self.reader.read_line(&mut id).await?;
+    let id = id.trim();
+
+    let path = Path::new("users").join(format!("{}.json", id));
+
+    if path.exists() {
+        self.writer.write_all(b"User already exists\n").await?;
+        return Ok(self);
+    }
+
+    self.writer.write_all(b"Enter public key:\n").await?;
+
+    let mut pk = String::new();
+    self.reader.read_line(&mut pk).await?;
+
+    let user = User {
+        id: id.to_string(),
+        pk: pk.trim().to_string(),
+    };
+
+    tokio::fs::create_dir_all("users").await?;
+    tokio::fs::write(path, serde_json::to_string_pretty(&user)?).await?;
+
+    self.writer.write_all(b"Registered\n").await?;
+
+    Ok(self)
 }
 }

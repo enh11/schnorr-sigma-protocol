@@ -2,6 +2,7 @@
 use schnorr::schnorr_protocol::{Connection, ProtocolState};
 use tokio::io::{BufReader};
 use tokio::net::{TcpListener, TcpStream};
+use schnorr::schnorr_protocol::Action;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()>{
@@ -28,6 +29,5 @@ async fn handle_connection(socket: TcpStream)->anyhow::Result<()> {
         writer,
         state: ProtocolState::WaitingForId,
     };
-
     conn.run().await
 }
