@@ -49,7 +49,7 @@ pub struct Prover {
 
 impl Prover {
     pub fn new(pk:PublicKey)->Self{
-        Prover { 
+        Prover {
             public_key: pk, 
             r: None, 
             commitment:CtOption::new(ProjectivePoint::IDENTITY, Choice::from(0)),
