@@ -27,7 +27,7 @@
 //! - Each state transition is explicit and validated
 //! - Designed to be extended with timeouts, retries, or additional checks
 
-use std::{path::Path, str::FromStr};
+use std::{any, path::Path, str::FromStr};
 use anyhow::Ok;
 use k256::{EncodedPoint, PublicKey, elliptic_curve::sec1::FromEncodedPoint};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -48,7 +48,7 @@ pub struct User {
 pub enum ProtocolState {
     /// Initial state.
     ///
-    /// The verifier is waiting for the prover to send an identifier (user ID).
+    /// The verifier is waiting for the prover to send an identifier to authenticate his/her self (user ID).
     WaitingForId,
 
     /// The user has been successfully loaded.
@@ -106,6 +106,13 @@ pub struct Connection {
     pub state: ProtocolState,
 }
 impl Connection {
+    pub async fn handle_waiting_for_action(mut self)->anyhow::Result<Self> {
+        self.writer
+            .write_all(b"Choose action: [login/register]\n")
+            .await?;
+    Ok(self)
+        
+    }
     pub async fn handle_waiting_for_id(mut self) -> anyhow::Result<Self> {
         // ask for id
         self.writer.write_all(b"Enter ID:\n").await?;
