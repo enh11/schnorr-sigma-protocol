@@ -1,3 +1,4 @@
+use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
 use schnorr::prover::{Prover};
 use tokio::{io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader}, net::TcpStream};
@@ -15,7 +16,28 @@ async fn main() -> anyhow::Result<()> {
     reader.read_line(&mut server_msg).await?;
     println!("{}", server_msg);
 
-// Insert ID and send it to the server.
+let mut action = String::new();
+let mut stdin = BufReader::new(io::stdin());
+
+stdin.read_line(&mut action).await?;
+writer.write_all(action.as_bytes()).await?;
+println!("action is {}",action);
+match action.trim() {
+    "login" => authentication(reader, writer).await,
+    "register" => {println!("action is register");
+    Ok(())}
+    _=> {
+        println!("invalid action");
+        Ok(())
+    }
+}
+}
+pub async fn authentication(mut reader:BufReader<tokio::net::tcp::OwnedReadHalf>, mut writer:tokio::net::tcp::OwnedWriteHalf) -> anyhow::Result<()>{
+  // Insert ID and send it to the server.
+  let mut server_msg = String::new();
+    reader.read_line(&mut server_msg).await?;
+    println!("{}", server_msg);
+    
     let mut id = String::new();
     let mut stdin_reader = BufReader::new(io::stdin());
     stdin_reader.read_line(&mut id).await?;
@@ -41,5 +63,5 @@ server_msg.clear();
     reader.read_line(&mut server_msg).await?;
     println!("{}", server_msg);
 
-    Ok(())
+    Ok(())  
 }
