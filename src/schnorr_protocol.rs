@@ -31,15 +31,10 @@ use std::{any, path::Path, str::FromStr};
 use anyhow::Ok;
 use k256::{EncodedPoint, PublicKey, elliptic_curve::sec1::FromEncodedPoint};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use crate::verifier::Verifier;
+use crate::{user::User, verifier::Verifier};
 use tokio::net::tcp::{OwnedReadHalf,OwnedWriteHalf};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct User {
-    pub id: String,
-    pub pk: String,
-}
 pub enum Action {
     Invalid,
     Register,
@@ -240,6 +235,7 @@ pub async fn run_register(mut self) -> anyhow::Result<Self> {
     let user = User {
         id: id.to_string(),
         pk: pk.trim().to_string(),
+        name: todo!(),
     };
 
     tokio::fs::create_dir_all("users").await?;

@@ -52,7 +52,7 @@ pub async fn authentication(mut reader:BufReader<tokio::net::tcp::OwnedReadHalf>
     let mut prover = Prover::new(my_pk);
 // First Round: generate random point.
     let _ = prover.send_commitment_to_random_value(&mut writer).await?;
-    println!("commit {:?}",prover.commitment.unwrap());
+    //println!("commit {:?}",prover.commitment.unwrap());
 // Second Round: read challenge from prover and respond.
 
 let _ = prover.read_challenge(&mut reader).await?;
