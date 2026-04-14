@@ -1,7 +1,7 @@
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
 use schnorr::prover::{Prover};
-use tokio::{io::{AsyncBufReadExt,AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
+use tokio::{io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
 pub struct ClientConnection {
     pub reader: BufReader<OwnedReadHalf>,
