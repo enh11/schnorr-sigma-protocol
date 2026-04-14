@@ -25,9 +25,9 @@ anyhow = "1.0.102"
 rand = "0.10.1"
 
 [[bin]]
-name = "verifier"
-path = "src/bin/verifier.rs"
+name = "server"
+path = "src/bin/server.rs"
 
 [[bin]]
-name = "prover"
-path = "src/bin/prover.rs"
+name = "client"
+path = "src/bin/client.rs"

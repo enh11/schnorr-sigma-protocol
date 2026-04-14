@@ -4,7 +4,7 @@ use k256::{PublicKey, Secp256k1, elliptic_curve::{SecretKey, consts::P256, sec1:
 use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct User {
     pub id: String,
     pub name: String,
