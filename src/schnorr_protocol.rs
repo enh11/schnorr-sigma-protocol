@@ -27,13 +27,12 @@
 //! - Each state transition is explicit and validated
 //! - Designed to be extended with timeouts, retries, or additional checks
 
-use std::{any, path::Path, str::FromStr};
+use std::{path::Path, str::FromStr};
 use anyhow::Ok;
 use k256::{EncodedPoint, PublicKey, elliptic_curve::{sec1::FromEncodedPoint}};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use crate::{user::User, verifier::Verifier};
 use tokio::net::tcp::{OwnedReadHalf,OwnedWriteHalf};
-use serde::{Deserialize, Serialize};
 
 pub enum Action {
     Invalid,
@@ -175,7 +174,7 @@ impl Connection {
             _ => unreachable!(),
         };
         let success = verifier
-            .verify(&mut self.reader, &mut self.writer)
+            .verify(&mut self.reader)
             .await?;
 
         if success {
@@ -215,6 +214,8 @@ pub async fn run_schnorr(mut self) -> anyhow::Result<Self> {
     Ok(self)
 }
 pub async fn run_register(mut self) -> anyhow::Result<Self> {
+
+    //THIS MUST BE FIXED
     self.writer.write_all(b"Enter new ID:\n").await?;
 
     let mut id = String::new();

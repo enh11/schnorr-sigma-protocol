@@ -61,7 +61,7 @@ pub async fn read_point(&self, reader: &mut BufReader<OwnedReadHalf>) -> anyhow:
         //println!("received {:?}", commit);
         Ok(())
     }
-    pub async fn verify(&self,reader: &mut BufReader<OwnedReadHalf>,writer: &mut OwnedWriteHalf)->anyhow::Result<bool> {
+    pub async fn verify(&self,reader: &mut BufReader<OwnedReadHalf>)->anyhow::Result<bool> {
         let response = self.read_point(reader).await?;
         let c = self.challenge.unwrap();
         let pk  = ProjectivePoint::from_encoded_point(

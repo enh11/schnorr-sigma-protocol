@@ -1,6 +1,6 @@
 use std::{fs::{self, File}, io::Write};
 
-use k256::{PublicKey, Secp256k1, elliptic_curve::{SecretKey, consts::P256, sec1::ToEncodedPoint}, pkcs8::{EncodePrivateKey, EncodePublicKey}};
+use k256::{PublicKey, Secp256k1, elliptic_curve::{SecretKey, sec1::ToEncodedPoint}, pkcs8::{EncodePrivateKey, EncodePublicKey}};
 use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 
