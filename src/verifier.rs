@@ -13,6 +13,7 @@ use tokio::{io::{AsyncReadExt, AsyncWriteExt, BufReader}, net::tcp::{OwnedReadHa
 /// 3. Verifying the prover's **response** `zG = rG + c*PK`
 ///
 /// The `Verifier` maintains internal state for one round of the interactive protocol.
+
 pub struct Verifier {
     /// The public key of the prover being verified.
     pub public_key: PublicKey,  
@@ -68,10 +69,10 @@ pub async fn read_point(&self, reader: &mut BufReader<OwnedReadHalf>) -> anyhow:
         let u = pk *c;
         let commit = self.commitment.unwrap();
         if commit+u==response.unwrap() {
-            writer.write(b"Verification ok. User identified!").await?;
+            //writer.write(b"Verification ok. User identified!").await?;
             Ok(true)
         } else {
-            writer.write(b"Verification fails. User not identified!").await?;
+           // writer.write(b"Verification fails. User not identified!").await?;
             Ok(false)
         }
   

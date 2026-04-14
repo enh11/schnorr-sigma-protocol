@@ -29,9 +29,9 @@
 
 use std::{any, path::Path, str::FromStr};
 use anyhow::Ok;
-use k256::{EncodedPoint, PublicKey, elliptic_curve::sec1::FromEncodedPoint};
+use k256::{EncodedPoint, PublicKey, elliptic_curve::{sec1::FromEncodedPoint}};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use crate::{user::User, verifier::Verifier};
+use crate::{user::{self, User}, verifier::Verifier};
 use tokio::net::tcp::{OwnedReadHalf,OwnedWriteHalf};
 use serde::{Deserialize, Serialize};
 
@@ -44,6 +44,7 @@ pub enum Action {
 ///
 /// Each variant corresponds to a specific phase in the verifier's interaction
 /// with a prover. Transitions between states enforce correct protocol execution.
+/// 
 pub enum ProtocolState {
     /// Initial state.
     ///
@@ -55,7 +56,7 @@ pub enum ProtocolState {
     /// Contains the public key associated with the provided user ID.
     UserLoaded {
         /// Public key of the user, used for verification.
-        pk: PublicKey,
+        user: User,
     },
 
     /// The prover's commitment has been received.
@@ -128,27 +129,26 @@ impl Connection {
         let data = tokio::fs::read_to_string(id_str).await?;
         let users:Vec<User>= serde_json::from_str(&data)?;
 
-        let user =users.iter().find(|u| u.id == id.trim()).unwrap();
-        let msg = format!("Welcome {}.\n",user.name);
-                self.writer.write_all(msg.as_bytes()).await?;
+        let user =users.iter().find(|u| u.id == id.trim()).unwrap().clone();
+                self.writer.write_all(b"User found.\n").await?;
 
-        let pk_user = user.pk.clone();
-        println!("Loaded user {:?}",user.name);
-        let pk = EncodedPoint::from_str(&pk_user).unwrap();
-        let pk: PublicKey = PublicKey::from_encoded_point(&pk).unwrap();
+        // let pk_user = user.pk.clone();
+        // let pk = EncodedPoint::from_str(&pk_user).unwrap();
+        // let pk: PublicKey = PublicKey::from_encoded_point(&pk).unwrap();
 
 
-        self.state = ProtocolState::UserLoaded { pk };
+        self.state = ProtocolState::UserLoaded { user };
         
         Ok(self)
     }
     pub async fn handle_user_loaded(mut self) -> anyhow::Result<Self> {
         
-        let pk = match &self.state {
-            ProtocolState::UserLoaded { pk } => pk.clone(),
+        let str_pk = match &self.state {
+            ProtocolState::UserLoaded { user } => &user.pk,
             _ => unreachable!(),
         };
-
+        let pk =EncodedPoint::from_str(&str_pk).unwrap();
+        let pk = PublicKey::from_encoded_point(&pk).unwrap();
         let mut verifier = Verifier::new(pk);
 
         verifier.read_commitment(&mut self.reader).await?;
@@ -178,13 +178,15 @@ impl Connection {
             .verify(&mut self.reader, &mut self.writer)
             .await?;
 
-        self.state = if success {
-            ProtocolState::Verified
+        if success {
+                self.writer.write_all(b"ACCEPTED\n").await?;
+                self.state = ProtocolState::Verified;
             } else {
-            ProtocolState::Failed
-            };
+                self.writer.write_all(b"REJECTED\n").await?;
+                self.state = ProtocolState::Failed;
+            }
 
-    Ok(self)
+        Ok(self)
     }
 
 pub async fn run(mut self) -> anyhow::Result<()> {
