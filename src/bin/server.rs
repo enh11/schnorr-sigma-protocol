@@ -1,6 +1,7 @@
 
+use anyhow::Ok;
 use schnorr::schnorr_protocol::{Connection, ProtocolState};
-use tokio::io::{BufReader};
+use tokio::io::{AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 use schnorr::schnorr_protocol::Action;
 
@@ -12,7 +13,7 @@ async fn main() -> anyhow::Result<()>{
 
     loop {
         let (socket, addr) = listener.accept().await?;
-        println!("Prover connected. {}",addr);
+        println!("Client connected. {}",addr);
 
         tokio::spawn(async move {
             if let Err(e)= handle_connection(socket).await {
@@ -23,11 +24,13 @@ async fn main() -> anyhow::Result<()>{
 
 }
 async fn handle_connection(socket: TcpStream)->anyhow::Result<()> {
-     let (reader, writer) = socket.into_split();
-    let conn = Connection {
+    let (reader, writer) = socket.into_split();
+    let mut conn = Connection {
         reader: BufReader::new(reader),
         writer,
         state: ProtocolState::WaitingForId,
     };
+         conn.writer.write_all(b"Type 0 to authenticate your self if already registered. Type 1 to register a new user.\n").await?;
+
     conn.run().await
 }

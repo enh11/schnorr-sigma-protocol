@@ -106,16 +106,12 @@ pub struct Connection {
 }
 impl Connection {
     pub async fn read_action(&mut self) -> anyhow::Result<Action> {
-    self.writer
-        .write_all(b"Choose action: [login/register]\n")
-        .await?;
-
     let mut action = String::new();
     self.reader.read_line(&mut action).await?;
 
     Ok(match action.trim() {
-        "login" => Action::Authentication,
-        "register" => Action::Register,
+        "0" => Action::Authentication,
+        "1" => Action::Register,
         _ => Action::Invalid,
     })
 }
@@ -130,12 +126,14 @@ impl Connection {
         let id_str = Path::new("users").join(format!("{}.json", id.trim()));
 
         let data = tokio::fs::read_to_string(id_str).await?;
-        self.writer.write_all(b"user found.\n").await?;
         let users:Vec<User>= serde_json::from_str(&data)?;
 
-        let user =users.iter().find(|u| u.id == id.trim());
-        let pk_user = user.unwrap().pk.clone();
-        println!("pk {:?}",pk_user);
+        let user =users.iter().find(|u| u.id == id.trim()).unwrap();
+        let msg = format!("Welcome {}.\n",user.name);
+                self.writer.write_all(msg.as_bytes()).await?;
+
+        let pk_user = user.pk.clone();
+        println!("Loaded user {:?}",user.name);
         let pk = EncodedPoint::from_str(&pk_user).unwrap();
         let pk: PublicKey = PublicKey::from_encoded_point(&pk).unwrap();
 
@@ -190,6 +188,7 @@ impl Connection {
     }
 
 pub async fn run(mut self) -> anyhow::Result<()> {
+        
     loop {
         match self.read_action().await? {
             Action::Authentication => {
