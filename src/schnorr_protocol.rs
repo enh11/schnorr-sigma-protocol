@@ -236,8 +236,10 @@ pub async fn run_register(mut self) -> anyhow::Result<Self> {
 
     let user = User {
         id: id.to_string(),
-        pk: pk.trim().to_string(),
         name: todo!(),
+        email: todo!(),
+        pk: pk.trim().to_string(),
+
     };
 
     tokio::fs::create_dir_all("users").await?;

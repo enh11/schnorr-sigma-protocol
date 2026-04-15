@@ -29,7 +29,9 @@ impl ClientConnection {
 
     //Main run Loop
     pub async fn run(&mut self) -> anyhow::Result<()> {
-        // Read welcome message
+        // Read welcome message and choose the action:
+        // 0 to authenticate,
+        // 1 to register.
         let msg = self.read_line().await?;
         println!("{}", msg);
 
