@@ -216,36 +216,19 @@ pub async fn run_schnorr(mut self) -> anyhow::Result<Self> {
 pub async fn run_register(mut self) -> anyhow::Result<Self> {
 
     //THIS MUST BE FIXED
-    self.writer.write_all(b"Enter new ID:\n").await?;
 
-    let mut id = String::new();
-    self.reader.read_line(&mut id).await?;
-    let id = id.trim();
+    let mut user = String::new();
+    self.reader.read_line(&mut user).await?;
 
-    let path = Path::new("users").join(format!("{}.json", id));
+    println!("received user {}",user);
+    let user = User::new_from_json(&user)?;
+// 3. Save user
+    user.get_json()?;
 
-    if path.exists() {
-        self.writer.write_all(b"User already exists\n").await?;
-        return Ok(self);
-    }
-
-    self.writer.write_all(b"Enter public key:\n").await?;
-
-    let mut pk = String::new();
-    self.reader.read_line(&mut pk).await?;
-
-    let user = User {
-        id: id.to_string(),
-        name: todo!(),
-        email: todo!(),
-        pk: pk.trim().to_string(),
-
-    };
-
-    tokio::fs::create_dir_all("users").await?;
-    tokio::fs::write(path, serde_json::to_string_pretty(&user)?).await?;
-
-    self.writer.write_all(b"Registered\n").await?;
+    // 4. Respond to client
+    self.writer
+        .write_all(b"REGISTERED\n")
+        .await?;
 
     Ok(self)
 }

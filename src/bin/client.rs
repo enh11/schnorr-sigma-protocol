@@ -1,6 +1,8 @@
+use std::io::stdin;
+
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
-use schnorr::prover::{Prover};
+use schnorr::{prover::Prover, user::User};
 use tokio::{io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
 pub struct ClientConnection {
@@ -61,7 +63,8 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
         println!("{}", msg);
 
         // Initialize prover
-        let my_pk = PublicKey::read_public_key_der_file("pk.pem")?;
+        let key_path = format!("keys/{}",id.trim());
+        let my_pk = PublicKey::read_public_key_der_file(&key_path)?;
         let mut prover = Prover::new(my_pk);
 
         // Schnorr protocol
@@ -76,7 +79,18 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
         Ok(())
     }
 pub async fn run_register(&mut self)->anyhow::Result<()> {
-    todo!()
+    println!("Enter your username:\n");
+    let user_name = Self::read_stdin().await?;
+    println!("Enter your email:\n");
+    let email = Self::read_stdin().await?;
+    let user = User::from_data(&user_name.trim(), &email.trim())?;
+    let j = serde_json::to_string(&user)?+"\n";
+    self.writer.write_all(j.as_bytes()).await?;
+    let resp = self.read_line().await?;
+    println!("{}",resp);
+
+
+Ok(())
 }
 }
 
@@ -89,6 +103,5 @@ async fn main() -> anyhow::Result<()> {
         reader: BufReader::new(reader),
         writer,
     };
-
     conn.run().await
 }

@@ -1,10 +1,10 @@
 use std::path::Path;
 
+use clap::builder::Str;
 use k256::{PublicKey, Secp256k1, elliptic_curve::{SecretKey, sec1::ToEncodedPoint}, pkcs8::{EncodePrivateKey, EncodePublicKey}};
 use rand::RngExt;
 use rand_core::{OsRng};
 use serde::{Deserialize, Serialize};
-use tokio::fs;
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct User {
@@ -30,10 +30,9 @@ impl User {
     }
     pub fn from_data(user_name:&str,email:&str)-> anyhow::Result<Self>{
 
-
         let id = generate_id();
         println!("id {}",id);
-        let user_id = format!("{}-{}",user_name,id);
+        let user_id = format!("{}",id.trim());
 
  // 1. Create user directory (blocking is OK here since fn is sync)
     let dir = format!("keys/{}", user_id);
@@ -83,6 +82,10 @@ impl User {
     std::fs::write(path, json)?;
 
     Ok(())
+}
+pub fn new_from_json(json: &str) -> anyhow::Result<Self> {
+    let user = serde_json::from_str(json)?;
+    Ok(user)
 }
 }
 fn generate_id() -> String {
