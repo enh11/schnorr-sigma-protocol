@@ -117,19 +117,40 @@ impl Connection {
 }
     pub async fn handle_waiting_for_id(mut self) -> anyhow::Result<Self> {
         // ask for id
-        self.writer.write_all(b"Enter ID:\n").await?;
+    self.writer.write_all(b"Enter ID:\n").await?;
 
-        let mut id = String::new();
-        self.reader.read_line(&mut id).await?;
-        let id = id.trim();
+    let mut id = String::new();
+    self.reader.read_line(&mut id).await?;
 
-        let id_str = Path::new("users").join(format!("{}.json", id.trim()));
+    //let id = id.trim();
 
-        let data = tokio::fs::read_to_string(id_str).await?;
-        let users:Vec<User>= serde_json::from_str(&data)?;
+// build path
+let path = Path::new("users").join(format!("{}.json", id.trim()));
 
-        let user =users.iter().find(|u| u.id == id.trim()).unwrap().clone();
-                self.writer.write_all(b"User found.\n").await?;
+// 1. safely handle missing file
+let data = match tokio::fs::read_to_string(&path).await {
+    std::result::Result::Ok(d) => d,
+    std::result::Result::Err(_) => {
+        self.writer.write_all(b"User not found\n").await?;
+        return Ok(self);
+    }
+};
+
+// 2. parse JSON 
+let user:User = serde_json::from_str(&data)?;
+
+// // 3. find user safely
+// let user = match users.iter().find(|u| u.id == id) {
+//     Some(u) => u.clone(),
+//     None => {
+//         self.writer.write_all(b"User mismatch\n").await?;
+//         return Ok(self);
+//     }
+// };
+
+self.writer.write_all(b"User found.\n").await?;
+
+        println!("user is {:?}", &user);
 
         // let pk_user = user.pk.clone();
         // let pk = EncodedPoint::from_str(&pk_user).unwrap();
@@ -137,7 +158,6 @@ impl Connection {
 
 
         self.state = ProtocolState::UserLoaded { user };
-        
         Ok(self)
     }
     pub async fn handle_user_loaded(mut self) -> anyhow::Result<Self> {

@@ -1,4 +1,4 @@
-use std::io::stdin;
+use std::{io::stdin, path::Path};
 
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
@@ -56,14 +56,18 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
 
     // The client send it to the server.
         let id = Self::read_stdin().await?;
-        self.write_line(&id).await?;
+    // send to server
+    self.write_line(&id).await?;
 
+    // safe path usage
+let key_path = Path::new("keys")
+    .join(id.trim())
+    .join("pk.pem");
     // Server welcome
         let msg = self.read_line().await?;
         println!("{}", msg);
 
         // Initialize prover
-        let key_path = format!("keys/{}",id.trim());
         let my_pk = PublicKey::read_public_key_der_file(&key_path)?;
         let mut prover = Prover::new(my_pk);
 
