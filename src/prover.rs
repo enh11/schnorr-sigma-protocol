@@ -61,9 +61,6 @@ impl Prover {
         let sk: Result<SecretKey, k256::pkcs8::Error> = DecodePrivateKey::read_pkcs8_der_file(sk_path);
         Scalar::from_repr(sk.unwrap().to_bytes())
     }
-    // pub fn commit_sk(&self)->ProjectivePoint {
-    //     self.public_key.to_projective()
-    // }
     fn commit_random_value(&self)->(Scalar,ProjectivePoint) {
         let r  =Scalar::random(&mut OsRng);
         let commitment = ProjectivePoint::GENERATOR * r;

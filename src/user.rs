@@ -59,7 +59,7 @@ impl User {
     // 4. Write private key safely
     let sk_path = format!("{}/sk.pem", dir);
     let pk_path = format!("{}/pk.pem", dir);
-    let json_path = format!("{}/{}.pem", dir,user_id);
+    let json_path = format!("{}/{}.json", dir,user_id);
 
 
     std::fs::write(sk_path, sk_pem.as_bytes())?;
