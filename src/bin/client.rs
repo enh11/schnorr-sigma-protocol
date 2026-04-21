@@ -1,9 +1,8 @@
-use std::{io::stdin, path::Path};
+use std::{path::Path};
 
 use anyhow::Ok;
-use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
 use schnorr::{prover::Prover, user::User};
-use tokio::{io::{self, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
+use tokio::{io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
 pub struct ClientConnection {
     pub reader: BufReader<OwnedReadHalf>,
@@ -59,19 +58,18 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
     // send to server
     self.write_line(&id).await?;
 
-    // safe path usage
-let key_path = Path::new("keys")
-    .join(id.trim())
-    .join("pk.pem");
     // Server welcome
         let msg = self.read_line().await?;
         println!("{}", msg);
 // build path
-let path =Path::new("keys")
-    .join(format!("{}.json",id.trim()));
+let path = Path::new("keys")
+    .join(&id.trim())
+    .join(
+        format!("{}.json",id.trim())
+    );
 // 1. safely handle missing file
 let data = tokio::fs::read_to_string(&path).await?;   
-let user:User = serde_json::from_str(&data)?;
+let user:User = User::new_from_json(&data)?;
 let mut prover = Prover::new(user);
 
         // let my_pk = PublicKey::read_public_key_der_file(&key_path)?;

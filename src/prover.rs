@@ -93,9 +93,12 @@ pub async fn response(
     
         let r = self.commitment.unwrap();
         let c = self.challenge.unwrap();
+        let id = &self.user.id;
+        println!("id is {}",id);
         //Here must be fixed, the path must be build from user id.
         // Try to define the Prover struc using User as item instead of pk.
-        let sk = self.read_pkcs8_der_file(Path::new("keys/4737-3790-6725-4182/sk.pem")).unwrap();
+        let sk_path = format!("keys/{}/sk.pem",id);
+        let sk = self.read_pkcs8_der_file(Path::new(&sk_path)).unwrap();
         let z = r + ProjectivePoint::GENERATOR * (sk*c);
         //println!("z is {:?}",z);
         writer.write_all(&z.to_encoded_point(false).to_bytes()).await?;
