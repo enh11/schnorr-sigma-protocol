@@ -1,6 +1,8 @@
+use std::path::Path;
+
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
-use schnorr::prover::{Prover};
+use schnorr::{prover::Prover, user::User};
 use tokio::{io::{self, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
 pub struct ClientConnection {
@@ -53,14 +55,21 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
     // The client send it to the server.
         let id = Self::read_stdin().await?;
         self.write_line(&id).await?;
+        let id = id.trim();
 
     // Server welcome
         let msg = self.read_line().await?;
         println!("{}", msg);
 
         // Initialize prover
-        let my_pk = PublicKey::read_public_key_der_file("pk.pem")?;
-        let mut prover = Prover::new(my_pk);
+        let path_string = format!("keys/{}.json", id);
+        let json_path = Path::new(&path_string);
+
+        let data = tokio::fs::read_to_string(json_path).await?;
+        let user: User= serde_json::from_str(&data)?;
+        //let my_pk = PublicKey::read_public_key_der_file(pk_path)?;
+
+        let mut prover = Prover::new(user);
 
         // Schnorr protocol
         prover.send_commitment_to_random_value(&mut self.writer).await?;
