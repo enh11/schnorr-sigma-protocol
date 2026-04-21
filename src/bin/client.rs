@@ -1,4 +1,4 @@
-use std::{io::stdin, path::Path};
+use std::path::Path;
 
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
@@ -31,9 +31,7 @@ impl ClientConnection {
 
     //Main run Loop
     pub async fn run(&mut self) -> anyhow::Result<()> {
-        // Read welcome message and choose the action:
-        // 0 to authenticate,
-        // 1 to register.
+        // Read welcome message
         let msg = self.read_line().await?;
         println!("{}", msg);
 
@@ -56,20 +54,22 @@ pub async fn run_authentication(&mut self)->anyhow::Result<()> {
 
     // The client send it to the server.
         let id = Self::read_stdin().await?;
-    // send to server
-    self.write_line(&id).await?;
+        self.write_line(&id).await?;
+        let id = id.trim();
 
-    // safe path usage
-let key_path = Path::new("keys")
-    .join(id.trim())
-    .join("pk.pem");
     // Server welcome
         let msg = self.read_line().await?;
         println!("{}", msg);
 
         // Initialize prover
-        let my_pk = PublicKey::read_public_key_der_file(&key_path)?;
-        let mut prover = Prover::new(my_pk);
+        let path_string = format!("keys/{}.json", id);
+        let json_path = Path::new(&path_string);
+
+        let data = tokio::fs::read_to_string(json_path).await?;
+        let user: User= serde_json::from_str(&data)?;
+        //let my_pk = PublicKey::read_public_key_der_file(pk_path)?;
+
+        let mut prover = Prover::new(user);
 
         // Schnorr protocol
         prover.send_commitment_to_random_value(&mut self.writer).await?;
@@ -83,18 +83,7 @@ let key_path = Path::new("keys")
         Ok(())
     }
 pub async fn run_register(&mut self)->anyhow::Result<()> {
-    println!("Enter your username:\n");
-    let user_name = Self::read_stdin().await?;
-    println!("Enter your email:\n");
-    let email = Self::read_stdin().await?;
-    let user = User::from_data(&user_name.trim(), &email.trim())?;
-    let j = serde_json::to_string(&user)?+"\n";
-    self.writer.write_all(j.as_bytes()).await?;
-    let resp = self.read_line().await?;
-    println!("{}",resp);
-
-
-Ok(())
+    todo!()
 }
 }
 
@@ -107,5 +96,6 @@ async fn main() -> anyhow::Result<()> {
         reader: BufReader::new(reader),
         writer,
     };
+
     conn.run().await
 }
