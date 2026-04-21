@@ -10,7 +10,7 @@ use std::{fs::{File}, io::{Write}, path::Path};
 use anyhow::Ok;
 use crypto_bigint::subtle::{Choice, CtOption};
 use k256::{
-    ProjectivePoint, PublicKey, Scalar, SecretKey, 
+    ProjectivePoint, Scalar, SecretKey, 
     elliptic_curve::{Field, PrimeField, sec1::ToEncodedPoint}, 
     pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey}
 };
@@ -94,7 +94,6 @@ pub async fn response(
         let r = self.commitment.unwrap();
         let c = self.challenge.unwrap();
         let id = &self.user.id;
-        println!("id is {}",id);
         //Here must be fixed, the path must be build from user id.
         // Try to define the Prover struc using User as item instead of pk.
         let sk_path = format!("keys/{}/sk.pem",id);
