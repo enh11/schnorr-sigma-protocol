@@ -27,13 +27,12 @@
 //! - Each state transition is explicit and validated
 //! - Designed to be extended with timeouts, retries, or additional checks
 
-use std::{any, path::Path, str::FromStr};
+use std::{path::Path, str::FromStr};
 use anyhow::Ok;
 use k256::{EncodedPoint, PublicKey, elliptic_curve::{sec1::FromEncodedPoint}};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use crate::{user::{self, User}, verifier::Verifier};
+use crate::{user::User, verifier::Verifier};
 use tokio::net::tcp::{OwnedReadHalf,OwnedWriteHalf};
-use serde::{Deserialize, Serialize};
 
 pub enum Action {
     Invalid,
@@ -118,19 +117,40 @@ impl Connection {
 }
     pub async fn handle_waiting_for_id(mut self) -> anyhow::Result<Self> {
         // ask for id
-        self.writer.write_all(b"Enter ID:\n").await?;
+    self.writer.write_all(b"Enter ID:\n").await?;
 
-        let mut id = String::new();
-        self.reader.read_line(&mut id).await?;
-        let id = id.trim();
+    let mut id = String::new();
+    self.reader.read_line(&mut id).await?;
 
-        let id_str = Path::new("users").join(format!("{}.json", id.trim()));
+    //let id = id.trim();
 
-        let data = tokio::fs::read_to_string(id_str).await?;
-        let users:Vec<User>= serde_json::from_str(&data)?;
+// build path
+let path = Path::new("users").join(format!("{}.json", id.trim()));
 
-        let user =users.iter().find(|u| u.id == id.trim()).unwrap().clone();
-                self.writer.write_all(b"User found.\n").await?;
+// 1. safely handle missing file
+let data = match tokio::fs::read_to_string(&path).await {
+    std::result::Result::Ok(d) => d,
+    std::result::Result::Err(_) => {
+        self.writer.write_all(b"User not found\n").await?;
+        return Ok(self);
+    }
+};
+
+// 2. parse JSON 
+let user:User = serde_json::from_str(&data)?;
+
+// // 3. find user safely
+// let user = match users.iter().find(|u| u.id == id) {
+//     Some(u) => u.clone(),
+//     None => {
+//         self.writer.write_all(b"User mismatch\n").await?;
+//         return Ok(self);
+//     }
+// };
+
+self.writer.write_all(b"User found.\n").await?;
+
+        println!("user is {:?}", &user);
 
         // let pk_user = user.pk.clone();
         // let pk = EncodedPoint::from_str(&pk_user).unwrap();
@@ -138,7 +158,6 @@ impl Connection {
 
 
         self.state = ProtocolState::UserLoaded { user };
-        
         Ok(self)
     }
     pub async fn handle_user_loaded(mut self) -> anyhow::Result<Self> {
@@ -175,7 +194,7 @@ impl Connection {
             _ => unreachable!(),
         };
         let success = verifier
-            .verify(&mut self.reader, &mut self.writer)
+            .verify(&mut self.reader)
             .await?;
 
         if success {
@@ -215,34 +234,21 @@ pub async fn run_schnorr(mut self) -> anyhow::Result<Self> {
     Ok(self)
 }
 pub async fn run_register(mut self) -> anyhow::Result<Self> {
-    self.writer.write_all(b"Enter new ID:\n").await?;
 
-    let mut id = String::new();
-    self.reader.read_line(&mut id).await?;
-    let id = id.trim();
+    //THIS MUST BE FIXED
 
-    let path = Path::new("users").join(format!("{}.json", id));
+    let mut user = String::new();
+    self.reader.read_line(&mut user).await?;
 
-    if path.exists() {
-        self.writer.write_all(b"User already exists\n").await?;
-        return Ok(self);
-    }
+    println!("received user {}",user);
+    let user = User::new_from_json(&user)?;
+// 3. Save user
+    user.get_json()?;
 
-    self.writer.write_all(b"Enter public key:\n").await?;
-
-    let mut pk = String::new();
-    self.reader.read_line(&mut pk).await?;
-
-    let user = User {
-        id: id.to_string(),
-        pk: pk.trim().to_string(),
-        name: todo!(),
-    };
-
-    tokio::fs::create_dir_all("users").await?;
-    tokio::fs::write(path, serde_json::to_string_pretty(&user)?).await?;
-
-    self.writer.write_all(b"Registered\n").await?;
+    // 4. Respond to client
+    self.writer
+        .write_all(b"REGISTERED\n")
+        .await?;
 
     Ok(self)
 }

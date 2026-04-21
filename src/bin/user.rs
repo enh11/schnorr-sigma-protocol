@@ -1,6 +1,8 @@
 use schnorr::user::User;
 
 fn main() {
-    let _ =User::from_str("mandi");
+    let c =User::from_data("e","mandi@gmail.com");
+    let _ = c.unwrap().get_json();
+
     
 }

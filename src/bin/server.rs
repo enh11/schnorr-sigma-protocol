@@ -1,9 +1,7 @@
 
-use anyhow::Ok;
 use schnorr::schnorr_protocol::{Connection, ProtocolState};
 use tokio::io::{AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
-use schnorr::schnorr_protocol::Action;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()>{
