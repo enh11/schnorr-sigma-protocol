@@ -3,7 +3,7 @@ use std::{io::stdin, path::Path};
 use anyhow::Ok;
 use k256::{elliptic_curve::{PublicKey}, pkcs8::DecodePublicKey};
 use schnorr::{prover::Prover, user::User};
-use tokio::{io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
+use tokio::{io::{self, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader}, net::{TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
 pub struct ClientConnection {
     pub reader: BufReader<OwnedReadHalf>,

@@ -17,6 +17,8 @@ use k256::{
 use rand_core::OsRng;
 use tokio::{io::{AsyncReadExt, AsyncWriteExt, BufReader}, net::{tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 
+use crate::user::User;
+
 /// A `Prover` participates in a Schnorr identification protocol.
 /// 
 /// # Overview
@@ -33,7 +35,7 @@ use tokio::{io::{AsyncReadExt, AsyncWriteExt, BufReader}, net::{tcp::{OwnedReadH
 /// # Fields
 pub struct Prover {
     /// The public key of the prover.
-    pub public_key: PublicKey,  
+    pub user: User,  
     
     /// The random secret `r` generated for a protocol session.
     /// This is used to compute the commitment `rG`.
@@ -48,9 +50,9 @@ pub struct Prover {
 }
 
 impl Prover {
-    pub fn new(pk:PublicKey)->Self{
+    pub fn new(user:User)->Self{
         Prover {
-            public_key: pk, 
+            user, 
             r: None, 
             commitment:CtOption::new(ProjectivePoint::IDENTITY, Choice::from(0)),
             challenge: CtOption::new(Scalar::ZERO, Choice::from(0)) }
@@ -59,9 +61,9 @@ impl Prover {
         let sk: Result<SecretKey, k256::pkcs8::Error> = DecodePrivateKey::read_pkcs8_der_file(sk_path);
         Scalar::from_repr(sk.unwrap().to_bytes())
     }
-    pub fn commit_sk(&self)->ProjectivePoint {
-        self.public_key.to_projective()
-    }
+    // pub fn commit_sk(&self)->ProjectivePoint {
+    //     self.public_key.to_projective()
+    // }
     fn commit_random_value(&self)->(Scalar,ProjectivePoint) {
         let r  =Scalar::random(&mut OsRng);
         let commitment = ProjectivePoint::GENERATOR * r;

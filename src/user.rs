@@ -54,6 +54,7 @@ impl User {
        // 3. Serialize keys
     let sk_pem = sk.to_pkcs8_der()?;
     let pk_pem = pk.to_public_key_der()?;
+    let user_json = serde_json::to_string_pretty(&user)?;
 
     // 4. Write private key safely
     let sk_path = format!("{}/sk.pem", dir);
