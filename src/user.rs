@@ -1,6 +1,5 @@
 use std::path::Path;
 
-use clap::builder::Str;
 use k256::{PublicKey, Secp256k1, elliptic_curve::{SecretKey, sec1::ToEncodedPoint}, pkcs8::{EncodePrivateKey, EncodePublicKey}};
 use rand::RngExt;
 use rand_core::{OsRng};
