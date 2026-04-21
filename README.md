@@ -25,14 +25,14 @@ Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1)  and 
 The verifier opens a TCP listener on `127.0.0.1:8080` and waits for incoming prover connections.
 
 ```bash
-cargo run --bin verifier
+cargo run --bin server
 ```
 ### Run the prover
 The prover connects to the verifier and sends the commitment 
 $R=\alpha_t G$
 
 ```
-cargo run --bin prover
+cargo run --bin client
 ```
 
 - The server will prompt you for your ID.
