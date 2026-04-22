@@ -57,5 +57,5 @@ During authentication:
 
 **Outcome**
 
-✅ If the prover is honest → authentication is accepted
-❌ Otherwise → authentication is rejected
+ - ✅ If the prover is honest → authentication is accepted
+ - ❌ Otherwise → authentication is rejected
