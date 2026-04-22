@@ -30,19 +30,19 @@ impl User {
     pub fn from_data(user_name:&str,email:&str)-> anyhow::Result<Self>{
 
         let id = generate_id();
-        println!("id {}",id);
+        println!("Yout ID is {}",id);
         let user_id = format!("{}",id.trim());
 
- // 1. Create user directory (blocking is OK here since fn is sync)
-    let dir = format!("keys/{}", user_id);
-    std::fs::create_dir_all(&dir)?;
+        // 1. Create user directory (blocking is OK here since fn is sync)
+        let dir = Path::new("keys").join(&user_id);
+        std::fs::create_dir_all(&dir)?;
 
         // 2. Generate keypair
         let sk: SecretKey<Secp256k1> = SecretKey::random(&mut OsRng);
-        
         let pk = sk.public_key();
-        let encoded = pk.to_encoded_point(false); // false = uncompressed (65 bytes)
-        let pk_hex = hex::encode(encoded.as_bytes());
+        let pk_hex = hex::encode(
+            pk.to_encoded_point(false).as_bytes()
+        );
 
         let user = User { 
             id:id, 
@@ -56,9 +56,9 @@ impl User {
     let user_json = serde_json::to_string_pretty(&user)?;
 
     // 4. Write private key safely
-    let sk_path = format!("{}/sk.pem", dir);
-    let pk_path = format!("{}/pk.pem", dir);
-    let json_path = format!("{}/{}.json", dir,user_id);
+    let sk_path = dir.join("sk.pem");
+    let pk_path = dir.join("pk.pem");
+    let json_path = dir.join(format!("{}.json",user_id));
 
 
     std::fs::write(sk_path, sk_pem.as_bytes())?;
