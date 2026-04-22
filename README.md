@@ -20,25 +20,24 @@ Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1)  and 
 
 ## Usage
 
-### Start the verifier
+### Start the server
 
 The verifier opens a TCP listener on `127.0.0.1:8080` and waits for incoming prover connections.
 
 ```bash
 cargo run --bin server
 ```
-### Run the prover
-The prover connects to the verifier and sends the commitment 
-$R=\alpha_t G$
-
+### Run the client
+The client connects to the server
 ```
 cargo run --bin client
 ```
+The client decide if authenticate his self (if already registered) or if registered.
 
-- The server will prompt you for your ID.
-  - In this example, we use a `.json` file that maps IDs to public keys.
-  - For instance, the ID "123" corresponds to a stored public key.
+In the registration process a user name and an email is asked and a key pairs together with an ID is generated. 
+A local directory `keys` is created; it contains the keys in `.pem` extension and a json file with user's data.
+The same json file is also stored on the server side.
 
-- After entering the ID, the Schnorr protocol begins:
+In the authentication process, the server ask the user's ID. Then, the Schnorr's protocol runs:
   - If the prover is honest, the verifier accepts the proof.
   - Otherwise, the verifier rejects the identification attempt.
