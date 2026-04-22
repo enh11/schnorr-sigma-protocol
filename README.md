@@ -32,12 +32,28 @@ The client connects to the server
 ```
 cargo run --bin client
 ```
-The client decide if authenticate his self (if already registered) or if registered.
 
-In the registration process a user name and an email is asked and a key pairs together with an ID is generated. 
-A local directory `keys` is created; it contains the keys in `.pem` extension and a json file with user's data.
-The same json file is also stored on the server side.
+Once started, the client can either:
 
-In the authentication process, the server ask the user's ID. Then, the Schnorr's protocol runs:
-  - If the prover is honest, the verifier accepts the proof.
-  - Otherwise, the verifier rejects the identification attempt.
+ - **Authenticate** (if already registered), or
+ - **Register** as a new user
+### Registration Process
+
+During registration:
+
+ - The user is prompted for a username and email
+ - A key pair and a unique user ID are generated
+ - A local `keys/` directory is created containing:
+ - Cryptographic keys (in `.pem `format)
+ - A `JSON` file with user data
+
+The same user data JSON file is also stored on the server.
+### Authentication Process
+
+During authentication:
+
+ - The server requests the user’s ID
+ - The Schnorr identification protocol is executed
+**Outcome**
+✅ If the prover is honest → authentication is accepted
+❌ Otherwise → authentication is rejected
