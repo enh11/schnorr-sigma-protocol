@@ -54,6 +54,8 @@ During authentication:
 
  - The server requests the user’s ID
  - The Schnorr identification protocol is executed
+
 **Outcome**
+
 ✅ If the prover is honest → authentication is accepted
 ❌ Otherwise → authentication is rejected
