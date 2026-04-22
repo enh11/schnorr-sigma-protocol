@@ -73,7 +73,7 @@ impl Prover {
         let (r,rg) = self.commit_random_value();
         self.r = Some(r);
         self.commitment= CtOption::new(rg, Choice::from(1));
-        let _ =writer.write_all(&rg.to_encoded_point(false).to_bytes()).await;
+        writer.write_all(&rg.to_encoded_point(false).to_bytes()).await?;
         Ok(())
 }
 pub async fn read_challenge(
@@ -84,7 +84,6 @@ pub async fn read_challenge(
         reader.read_exact(&mut buf).await?;
         let challenge = Scalar::from_repr(buf.into());
         self.challenge = challenge;
-        //println!("received challenge{:?}", challenge);
         Ok(())
 }
 pub async fn response(
@@ -94,12 +93,12 @@ pub async fn response(
         let r = self.commitment.unwrap();
         let c = self.challenge.unwrap();
         let id = &self.user.id;
-        //Here must be fixed, the path must be build from user id.
-        // Try to define the Prover struc using User as item instead of pk.
-        let sk_path = format!("keys/{}/sk.pem",id);
+        
+        let sk_path = Path::new("keys")
+            .join(id)
+            .join("sk.pem");
         let sk = self.read_pkcs8_der_file(Path::new(&sk_path)).unwrap();
         let z = r + ProjectivePoint::GENERATOR * (sk*c);
-        //println!("z is {:?}",z);
         writer.write_all(&z.to_encoded_point(false).to_bytes()).await?;
         
         Ok(())
