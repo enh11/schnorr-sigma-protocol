@@ -15,8 +15,8 @@ Let $\mathbb{G}$ be a cyclic group of prime order $q$ (in this implementation we
 - **Verifier**: checks if $\alpha_z G = R + c G$.
 
 ## Features
-The protocol is implemented using `tokio` for \emph{Asynchronous TCP communication}. 
-Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1)  and Command line using `clap`. 
+The protocol is implemented using `tokio` for asynchronous TCP communication. 
+Elliptic curve operation from  [`k256`](https://docs.rs/k256/) (secp256k1).
 
 ## Usage
 
